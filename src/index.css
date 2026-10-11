@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #0f172a;
+    background-color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scientific tabular numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom scrollbars for data tables and logs */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Subtle ECG grid pattern */
+.bg-ecg-grid {
+  background-size: 20px 20px;
+  background-image: 
+    linear-gradient(to right, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 165, 233, 0.08) 1px, transparent 1px);
+}
+
+.bg-ecg-grid-fine {
+  background-size: 5px 5px;
+  background-image: 
+    linear-gradient(to right, rgba(14, 165, 233, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(14, 165, 233, 0.04) 1px, transparent 1px);
+}
+
+/* Print styles for research reports */
+@media print {
+  header, nav, .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

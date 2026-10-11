@@ -1,0 +1,7 @@
+{
+  "name": "CardioSignal 2.0",
+  "description": "Explainable Multimodal Cardiac Research Platform unifying clinical biomarkers, ECG waveform processing, and evidence-grounded neural reasoning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
