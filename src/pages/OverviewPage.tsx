@@ -15,8 +15,8 @@ import { useApp } from '../context/AppContext';
 import { Button } from '../components/common/Button';
 import { SectionHeading } from '../components/common/SectionHeading';
 
-const cardiacHeroImage = '/src/assets/images/cardiac_digital_twin_hero_1791732267854.jpg';
-const multimodalNetworkImage = '/src/assets/images/multimodal_cardiac_network_1791732294481.jpg';
+import cardiacHeroImage from '../assets/images/cardiac_digital_twin_hero_1791732267854.jpg';
+import multimodalNetworkImage from '../assets/images/multimodal_cardiac_network_1791732294481.jpg';
 
 export const OverviewPage: React.FC = () => {
   const { setCurrentPage, loadClinicalPreset, loadEcgPreset, ecgSignal } = useApp();
@@ -482,3 +482,4 @@ export const OverviewPage: React.FC = () => {
     </div>
   );
 };
+

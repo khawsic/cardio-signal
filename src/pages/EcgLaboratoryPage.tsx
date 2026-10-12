@@ -21,7 +21,7 @@ import { UploadDropzone } from '../components/common/UploadDropzone';
 import { ExpandableDetails } from '../components/common/ExpandableDetails';
 import { ECG_PRESETS } from '../data/mockData';
 
-const ecgVectorImage = '/src/assets/images/ecg_lead_vector_field_1791732281961.jpg';
+import ecgVectorImage from '../assets/images/ecg_lead_vector_field_1791732281961.jpg';
 
 export const EcgLaboratoryPage: React.FC = () => {
   const {
@@ -612,3 +612,4 @@ export const EcgLaboratoryPage: React.FC = () => {
     </div>
   );
 };
+
