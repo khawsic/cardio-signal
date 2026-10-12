@@ -117,7 +117,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
             onClick={() => navigateTo('overview')}
             className="cursor-pointer group flex items-center gap-3 select-none"
           >
-            <img src="/images/cardiosignal-logo.png" alt="CardioSignal logo" className="w-11 h-11 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
+            <img src="/images/cardiosignal-logo.png" alt="CardioSignal logo" className="w-16 h-16 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A192F]">
@@ -385,4 +385,5 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     </div>
   );
 };
+
 
