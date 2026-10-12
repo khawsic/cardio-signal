@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   Activity,
   Menu,
@@ -51,12 +51,12 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
 
   // Quick search results
   const searchResults = [
-    { label: 'Clinical Intelligence — Biomarker Input Form', page: 'clinical' as PageId },
-    { label: 'ECG Signal Laboratory — 12-Lead Waveform Inspection', page: 'ecg' as PageId },
-    { label: 'Multimodal Research — Cross-Attention Neural Fusion', page: 'multimodal' as PageId },
-    { label: 'Knowledge Graph — Pathophysiology & Evidence Tracing', page: 'knowledge' as PageId },
-    { label: 'Reports & Evaluation — Diagnostic Benchmarks & Ledger', page: 'reports' as PageId },
-    { label: 'Overview — Architecture Walkthrough & Paradigm', page: 'overview' as PageId },
+    { label: 'Clinical Intelligence â€” Biomarker Input Form', page: 'clinical' as PageId },
+    { label: 'ECG Signal Laboratory â€” 12-Lead Waveform Inspection', page: 'ecg' as PageId },
+    { label: 'Multimodal Research â€” Cross-Attention Neural Fusion', page: 'multimodal' as PageId },
+    { label: 'Knowledge Graph â€” Pathophysiology & Evidence Tracing', page: 'knowledge' as PageId },
+    { label: 'Reports & Evaluation â€” Diagnostic Benchmarks & Ledger', page: 'reports' as PageId },
+    { label: 'Overview â€” Architecture Walkthrough & Paradigm', page: 'overview' as PageId },
   ].filter((item) =>
     searchQuery.trim() === '' || item.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -68,7 +68,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
           <div className="flex items-center gap-3 tracking-wide">
             <span className="font-medium text-slate-200">Protocol v2.4-EHR</span>
-            <span className="text-slate-600 hidden sm:inline">·</span>
+            <span className="text-slate-600 hidden sm:inline">Â·</span>
             <span className="text-slate-400 hidden sm:inline">
               Validated On MIT-BIH & MIMIC-IV
             </span>
@@ -83,7 +83,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
               <Search className="w-3 h-3 text-slate-400" />
               <span className="hidden md:inline">Quick Find</span>
               <kbd className="hidden lg:inline-block bg-slate-800 text-[10px] px-1 py-0.2 rounded font-mono text-slate-400 border border-slate-700">
-                ⌘K
+                âŒ˜K
               </kbd>
             </button>
             <span className="text-slate-700 hidden sm:inline">|</span>
@@ -117,9 +117,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
             onClick={() => navigateTo('overview')}
             className="cursor-pointer group flex items-center gap-3 select-none"
           >
-            <div className="w-9 h-9 rounded-lg bg-[#0A192F] text-cyan-400 flex items-center justify-center shadow-sm group-hover:bg-[#112240] transition-colors">
-              <Activity className="w-5 h-5 text-cyan-400" />
-            </div>
+            <img src="/images/cardiosignal-logo.png" alt="CardioSignal logo" className="w-11 h-11 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-[#0A192F]">
@@ -139,9 +137,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           <div className="flex items-center gap-3">
             <div className="hidden lg:flex items-center gap-3 text-xs text-slate-500 border-r border-slate-200 pr-4">
               <span>Cohort: MIT-BIH & PTB-XL</span>
-              <span>·</span>
+              <span>Â·</span>
               <span>Patient: #{ecgSignal.patientId}</span>
-              <span>·</span>
+              <span>Â·</span>
               <span className="font-mono text-slate-700 font-medium">
                 {ecgSignal.heartRateBpm} bpm
               </span>
@@ -379,7 +377,7 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
               <strong className="text-slate-700">Research Prototype Disclaimer:</strong> CardioSignal 2.0 is an investigational computational cardiology platform designed exclusively for biomedical research, algorithmic evaluation, and multimodal workflow development. It does not provide primary clinical diagnosis and must not supersede direct clinical judgment or validated medical devices.
             </p>
             <div className="whitespace-nowrap shrink-0 text-slate-400">
-              © 2026 CardioSignal Research Consortium
+              Â© 2026 CardioSignal Research Consortium
             </div>
           </div>
         </div>
@@ -387,3 +385,4 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
     </div>
   );
 };
+
