@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -64,14 +64,18 @@ export const OverviewPage: React.FC = () => {
   return (
     <div className="bg-white">
       {/* 1. EDITORIAL HERO SECTION */}
-      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-slate-100">
+      <section className="relative isolate overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-slate-100">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <img src={cardiacHeroImage} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-center opacity-[0.14] transition-opacity duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/75" />
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Left Column: Editorial Headline & Actions */}
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-cyan-700">
                 <span>Computational Cardiology Research</span>
-                <span className="text-slate-300">·</span>
+                <span className="text-slate-300">Â·</span>
                 <span>Open Science Prototype</span>
               </div>
 
@@ -89,12 +93,12 @@ export const OverviewPage: React.FC = () => {
                   <strong className="text-slate-900 font-mono text-sm">21,837</strong>
                   <span className="ml-1.5 text-slate-500">PTB-XL ECGs</span>
                 </div>
-                <div className="hidden sm:inline text-slate-300">·</div>
+                <div className="hidden sm:inline text-slate-300">Â·</div>
                 <div>
                   <strong className="text-slate-900 font-mono text-sm">4,280</strong>
                   <span className="ml-1.5 text-slate-500">Paired MIMIC-IV Cases</span>
                 </div>
-                <div className="hidden sm:inline text-slate-300">·</div>
+                <div className="hidden sm:inline text-slate-300">Â·</div>
                 <div>
                   <strong className="text-cyan-700 font-mono text-sm">0.894</strong>
                   <span className="ml-1.5 text-slate-500">Multimodal AUROC</span>
@@ -179,7 +183,7 @@ export const OverviewPage: React.FC = () => {
                 Structured clinical indicators are evaluated with exact SHAP attributions, establishing individual feature impact on cardiovascular risk odds.
               </p>
               <div className="text-xs text-slate-500 border-t border-slate-100 pt-3">
-                <span>Diamond-Forrester</span> · <span>Framingham Risk Calibrated</span>
+                <span>Diamond-Forrester</span> Â· <span>Framingham Risk Calibrated</span>
               </div>
             </div>
 
@@ -195,7 +199,7 @@ export const OverviewPage: React.FC = () => {
                 12-lead signals undergo multi-scale wavelet denoising and temporal attention heatmapping to isolate ischemia and dysrhythmia complexes.
               </p>
               <div className="text-xs text-slate-500 border-t border-slate-100 pt-3">
-                <span>Pan-Tompkins QRS</span> · <span>500 Hz Calibration Grid</span>
+                <span>Pan-Tompkins QRS</span> Â· <span>500 Hz Calibration Grid</span>
               </div>
             </div>
 
@@ -211,7 +215,7 @@ export const OverviewPage: React.FC = () => {
                 Every probabilistic output is verified against formal clinical ontology nodes and authoritative AHA/ACC consensus guideline literature.
               </p>
               <div className="text-xs text-slate-500 border-t border-slate-100 pt-3">
-                <span>Class I Level A Evidence</span> · <span>Universal MI Criteria</span>
+                <span>Class I Level A Evidence</span> Â· <span>Universal MI Criteria</span>
               </div>
             </div>
           </div>
@@ -290,9 +294,9 @@ export const OverviewPage: React.FC = () => {
                       <div className="text-cyan-400 font-semibold mb-2">
                         Tabular Biomarkers + Waveform Buffer:
                       </div>
-                      <div>· Age: 64 yrs | Resting BP: 148 mmHg | Serum Chol: 278 mg/dL</div>
-                      <div>· ECG Channel: Lead II @ 250 Hz | Duration: 10.0s | 2,500 samples</div>
-                      <div className="text-emerald-400">✓ Signal validation checksum OK</div>
+                      <div>Â· Age: 64 yrs | Resting BP: 148 mmHg | Serum Chol: 278 mg/dL</div>
+                      <div>Â· ECG Channel: Lead II @ 250 Hz | Duration: 10.0s | 2,500 samples</div>
+                      <div className="text-emerald-400">âœ“ Signal validation checksum OK</div>
                     </div>
                   )}
 
@@ -301,10 +305,10 @@ export const OverviewPage: React.FC = () => {
                       <div className="text-cyan-400 font-semibold mb-2">
                         ResNet-1D Gradient Saliency Layer:
                       </div>
-                      <div>· ST segment elevation detected: +0.45 mV (Leads V1–V3)</div>
-                      <div>· Pan-Tompkins R-peaks: 14 cardiac cycles extracted</div>
+                      <div>Â· ST segment elevation detected: +0.45 mV (Leads V1â€“V3)</div>
+                      <div>Â· Pan-Tompkins R-peaks: 14 cardiac cycles extracted</div>
                       <div className="text-amber-400">
-                        ⚠ Temporal Saliency Peak: 96% attention density on J-point recovery
+                        âš  Temporal Saliency Peak: 96% attention density on J-point recovery
                       </div>
                     </div>
                   )}
@@ -314,10 +318,10 @@ export const OverviewPage: React.FC = () => {
                       <div className="text-cyan-400 font-semibold mb-2">
                         Cross-Attention Alignment Tensor:
                       </div>
-                      <div>· Tabular Exertional Angina ↔ Waveform ST Depression (Weight: 0.89)</div>
-                      <div>· Fluoroscopy Vessels (2) ↔ Anterior ST Vector Deviation (Weight: 0.94)</div>
+                      <div>Â· Tabular Exertional Angina â†” Waveform ST Depression (Weight: 0.89)</div>
+                      <div>Â· Fluoroscopy Vessels (2) â†” Anterior ST Vector Deviation (Weight: 0.94)</div>
                       <div className="text-cyan-300">
-                        ✓ Multimodal synergy gain: +0.110 AUROC over unimodal clinical baseline
+                        âœ“ Multimodal synergy gain: +0.110 AUROC over unimodal clinical baseline
                       </div>
                     </div>
                   )}
@@ -327,10 +331,10 @@ export const OverviewPage: React.FC = () => {
                       <div className="text-cyan-400 font-semibold mb-2">
                         Ontology Grounding Engine:
                       </div>
-                      <div>· Path: ST Elevation → Myocardial Ischemia → ACC/AHA Revasc Guideline</div>
-                      <div>· Evidence Level: Class I (Level A Consensus)</div>
+                      <div>Â· Path: ST Elevation â†’ Myocardial Ischemia â†’ ACC/AHA Revasc Guideline</div>
+                      <div>Â· Evidence Level: Class I (Level A Consensus)</div>
                       <div className="text-emerald-400">
-                        ✓ Citation: Thygesen K et al. Fourth Universal Def. Circulation 2018
+                        âœ“ Citation: Thygesen K et al. Fourth Universal Def. Circulation 2018
                       </div>
                     </div>
                   )}
@@ -482,4 +486,5 @@ export const OverviewPage: React.FC = () => {
     </div>
   );
 };
+
 
