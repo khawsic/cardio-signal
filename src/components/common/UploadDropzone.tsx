@@ -84,7 +84,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         }, 300);
       } catch {
         setUploadState('error');
-        setErrorMessage('Failed to decode signal array. File structure does not match standard PTB-XL / WFDB formatting.');
+        setErrorMessage('Failed to decode signal array. File structure does not match standard PhysioNet / MIT-BIH CSV formatting.');
       }
     };
 
@@ -164,7 +164,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         <p className="text-xs sm:text-sm text-slate-500 mb-4 leading-relaxed">
           {uploadState === 'success'
             ? 'Signal digitized and ready for filtering and neural saliency analysis.'
-            : `Compatible formats: ${acceptedFormats} (PhysioNet WFDB, PTB-XL, or raw CSV voltage time series at 250–500 Hz)`}
+            : `Compatible formats: ${acceptedFormats} (PhysioNet WFDB, MIT-BIH, or raw CSV voltage time series at 250–500 Hz)`}
         </p>
 
         {uploadState === 'error' && (

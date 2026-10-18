@@ -6,15 +6,23 @@ and executing reproducible predictions.
 
 import os
 import logging
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, List
+from .ecg_features import signal_features, feature_names, ECG_NUM_WAVE_SAMPLES
 
 logger = logging.getLogger(__name__)
 
 MODELS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
-CLINICAL_MODEL_PATH = os.path.join(MODELS_DIR, "clinical_rf_model.joblib")
-ECG_MODEL_PATH = os.path.join(MODELS_DIR, "ecg_rf_model.joblib")
+CLINICAL_MODEL_PATHS = [
+    os.path.join(MODELS_DIR, "clinical_rf_model.joblib"),
+    os.path.join(MODELS_DIR, "clinical_rf_model.pkl"),
+    os.path.join(MODELS_DIR, "model.pkl")
+]
+ECG_MODEL_PATHS = [
+    os.path.join(MODELS_DIR, "ecg_rf_model.joblib"),
+    os.path.join(MODELS_DIR, "ecg_rf_model.pkl"),
+    os.path.join(MODELS_DIR, "ecg_model.pkl")
+]
 
-# Cache for loaded models
 _loaded_models = {
     "clinical": None,
     "ecg": None
@@ -26,21 +34,20 @@ CLINICAL_FEATURE_NAMES = [
 ]
 
 ECG_NUM_FEATURES = 191
-# Paper specification: 180 resampled waveform samples (0-179)
-# + 11 statistical/derivative/spectral descriptors (180-190):
-# [mean, std, min, max, skewness, kurtosis, peak_to_peak, mean_diff, std_diff, energy, spectral_entropy]
-ECG_DESCRIPTOR_NAMES = [
-    "wave_sample_" + str(i) for i in range(180)
-] + [
-    "stat_mean", "stat_std", "stat_min", "stat_max", "stat_skewness",
-    "stat_kurtosis", "stat_peak_to_peak", "deriv_mean_diff", "deriv_std_diff",
-    "spectral_energy", "spectral_entropy"
-]
+ECG_DESCRIPTOR_NAMES = feature_names()
+
+def _find_existing_path(paths: List[str]) -> Optional[str]:
+    for p in paths:
+        if os.path.isfile(p):
+            return p
+    return None
 
 def get_model_status() -> Dict[str, Any]:
     """Returns the availability and metadata of model artifacts."""
-    clinical_exists = os.path.isfile(CLINICAL_MODEL_PATH)
-    ecg_exists = os.path.isfile(ECG_MODEL_PATH)
+    clinical_path = _find_existing_path(CLINICAL_MODEL_PATHS)
+    ecg_path = _find_existing_path(ECG_MODEL_PATHS)
+    clinical_exists = clinical_path is not None
+    ecg_exists = ecg_path is not None
 
     return {
         "clinical_model": {
@@ -53,7 +60,7 @@ def get_model_status() -> Dict[str, Any]:
             "paper_reported_auroc": 0.8669,
             "paper_reported_test_set_size": 61,
             "artifact_present": clinical_exists,
-            "path": CLINICAL_MODEL_PATH if clinical_exists else None,
+            "path": clinical_path,
             "status": "LOADED" if _loaded_models["clinical"] is not None else ("AVAILABLE" if clinical_exists else "MISSING")
         },
         "ecg_model": {
@@ -64,7 +71,7 @@ def get_model_status() -> Dict[str, Any]:
             "paper_reported_accuracy": 0.8220,
             "paper_reported_auroc": 0.8693,
             "artifact_present": ecg_exists,
-            "path": ECG_MODEL_PATH if ecg_exists else None,
+            "path": ecg_path,
             "status": "LOADED" if _loaded_models["ecg"] is not None else ("AVAILABLE" if ecg_exists else "MISSING")
         },
         "fusion_engine": {
@@ -80,14 +87,15 @@ def load_clinical_model():
     if _loaded_models["clinical"] is not None:
         return _loaded_models["clinical"]
 
-    if not os.path.isfile(CLINICAL_MODEL_PATH):
+    path = _find_existing_path(CLINICAL_MODEL_PATHS)
+    if not path:
         return None
 
     try:
         import joblib
-        model = joblib.load(CLINICAL_MODEL_PATH)
+        model = joblib.load(path)
         _loaded_models["clinical"] = model
-        logger.info(f"Loaded clinical model from {CLINICAL_MODEL_PATH}")
+        logger.info(f"Loaded clinical model from {path}")
         return model
     except Exception as e:
         logger.error(f"Error loading clinical model: {e}")
@@ -98,14 +106,15 @@ def load_ecg_model():
     if _loaded_models["ecg"] is not None:
         return _loaded_models["ecg"]
 
-    if not os.path.isfile(ECG_MODEL_PATH):
+    path = _find_existing_path(ECG_MODEL_PATHS)
+    if not path:
         return None
 
     try:
         import joblib
-        model = joblib.load(ECG_MODEL_PATH)
+        model = joblib.load(path)
         _loaded_models["ecg"] = model
-        logger.info(f"Loaded ECG model from {ECG_MODEL_PATH}")
+        logger.info(f"Loaded ECG model from {path}")
         return model
     except Exception as e:
         logger.error(f"Error loading ECG model: {e}")
@@ -118,7 +127,6 @@ def validate_clinical_inputs(data: Dict[str, Any]) -> Tuple[bool, Optional[str],
         return False, f"Missing required clinical features: {', '.join(missing)}", None
 
     try:
-        # Extract and convert values
         features = [
             float(data["age"]),
             int(data["sex"]),
@@ -139,9 +147,9 @@ def validate_clinical_inputs(data: Dict[str, Any]) -> Tuple[bool, Optional[str],
 
     # Physiological range sanity checks
     if not (10 <= features[0] <= 120):
-        return False, f"Age ({features[0]}) outside valid range [10, 120]", None
+        return False, f"Age ({features[0]}) outside valid physiological range [10, 120]", None
     if features[1] not in (0, 1):
-        return False, f"Sex must be 0 (female) or 1 (male)", None
+        return False, "Sex must be 0 (female) or 1 (male)", None
     if not (40 <= features[3] <= 300):
         return False, f"Resting blood pressure ({features[3]}) outside valid range [40, 300] mmHg", None
     if not (50 <= features[4] <= 800):
@@ -162,9 +170,8 @@ def predict_clinical(features: list) -> Dict[str, Any]:
         }
 
     try:
-        import numpy as np
-        X = np.array(features).reshape(1, -1)
-        # Positive class probability (index 1)
+        import pandas as pd
+        X = pd.DataFrame([features], columns=CLINICAL_FEATURE_NAMES)
         proba = float(model.predict_proba(X)[0][1])
         prediction = int(model.predict(X)[0])
 

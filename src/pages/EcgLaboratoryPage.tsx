@@ -33,6 +33,9 @@ export const EcgLaboratoryPage: React.FC = () => {
     ecgFilters,
     setEcgFilters,
     handleCustomEcgUpload,
+    isEcgLoading,
+    ecgApiError,
+    runEcgInference,
     setCurrentPage,
   } = useApp();
 
@@ -510,15 +513,33 @@ export const EcgLaboratoryPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wider text-cyan-700 mb-1">
-                Supported Neural Model Output
+                ECG Random Forest Model Output (191 Features)
               </div>
               <h3 className="text-lg font-bold text-[#0A192F]">
                 {ecgSignal.rhythmDiagnosis}
               </h3>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={runEcgInference}
+                disabled={isEcgLoading}
+              >
+                {isEcgLoading ? (
+                  <>
+                    <Activity className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                    Extracting 191 Feats...
+                  </>
+                ) : (
+                  <>
+                    <Activity className="w-3.5 h-3.5 mr-1.5 text-cyan-600" />
+                    Run 191-Feature Inference
+                  </>
+                )}
+              </Button>
               <div className="text-right">
-                <div className="text-xs text-slate-500">Confidence Calibrated</div>
+                <div className="text-xs text-slate-500">Pattern Probability</div>
                 <div className="text-lg font-bold font-mono text-cyan-800">
                   {(ecgSignal.diagnosisConfidence * 100).toFixed(1)}%
                 </div>
@@ -533,6 +554,13 @@ export const EcgLaboratoryPage: React.FC = () => {
               </Button>
             </div>
           </div>
+
+          {ecgApiError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 mb-4 flex items-center justify-between">
+              <span>ECG Inference Error: {ecgApiError}</span>
+              <span className="text-[11px] opacity-75">Verify backend status in /health</span>
+            </div>
+          )}
 
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">

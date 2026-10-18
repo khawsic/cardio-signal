@@ -26,6 +26,9 @@ export const ClinicalAnalysisPage: React.FC = () => {
     clinicalResult,
     runClinicalAnalysis,
     loadClinicalPreset,
+    isClinicalLoading,
+    clinicalApiError,
+    isModelUnavailable,
     setCurrentPage,
   } = useApp();
 
@@ -164,6 +167,33 @@ export const ClinicalAnalysisPage: React.FC = () => {
                 Reset
               </button>
             </div>
+
+            {clinicalApiError && (
+              <div
+                className={`p-4 rounded-xl border mb-6 text-xs leading-relaxed ${
+                  isModelUnavailable
+                    ? 'bg-amber-50 border-amber-200 text-amber-900'
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-current" />
+                  <div>
+                    <h4 className="font-bold text-sm">
+                      {isModelUnavailable
+                        ? 'Model Artifact Unavailable (HTTP 503)'
+                        : 'Backend Communication Error'}
+                    </h4>
+                    <p className="mt-1">{clinicalApiError}</p>
+                    <p className="mt-1.5 opacity-80 text-[11px]">
+                      {isModelUnavailable
+                        ? 'The backend inference service is running, but clinical_rf_model.joblib is not present in backend/models/. Run python backend/scripts/train_clinical_rf.py to train and supply the artifact.'
+                        : 'Check that your Flask backend server is running and accessible via VITE_API_BASE_URL.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <form onSubmit={validateAndAnalyze} className="space-y-6">
               {/* Demographics row */}
@@ -305,13 +335,22 @@ export const ClinicalAnalysisPage: React.FC = () => {
               </div>
 
               {/* Action submission bar */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <span className="text-xs text-slate-500">
                   Calibrated on Cleveland & Framingham Heart Study protocol
                 </span>
-                <Button type="submit" variant="primary" size="lg">
-                  Validate & Run Clinical Analysis
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                <Button type="submit" variant="primary" size="lg" disabled={isClinicalLoading}>
+                  {isClinicalLoading ? (
+                    <>
+                      <Activity className="w-4 h-4 animate-spin mr-2" />
+                      Executing Model Inference...
+                    </>
+                  ) : (
+                    <>
+                      Validate & Run Clinical Analysis
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
@@ -352,7 +391,7 @@ export const ClinicalAnalysisPage: React.FC = () => {
                 Clinical Reference Standards
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                Values outside physiological calibration bounds are flagged during input validation to ensure stability before passing to the cross-attention fusion layer.
+                Values outside physiological calibration bounds are flagged during input validation to ensure stability before passing to the multimodal decision fusion layer.
               </p>
               <div className="text-xs text-slate-500 flex items-center gap-4">
                 <span>Normative Cohort Median: 22.4%</span>

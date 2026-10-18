@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   PageId,
   ClinicalData,
@@ -13,16 +13,28 @@ import {
   generateEcgPoints,
   KNOWLEDGE_NODES,
 } from '../data/mockData';
+import {
+  apiClient,
+  ModelStatusResponse,
+  ClinicalPredictionResponse,
+  EcgPredictionResponse,
+  FusionPredictionResponse,
+} from '../services/apiClient';
 
 interface AppContextType {
   currentPage: PageId;
   setCurrentPage: (page: PageId) => void;
+
   // Clinical state
   clinicalData: ClinicalData;
   setClinicalData: React.Dispatch<React.SetStateAction<ClinicalData>>;
   clinicalResult: ClinicalAnalysisResult | null;
-  runClinicalAnalysis: () => void;
+  runClinicalAnalysis: () => Promise<void>;
   loadClinicalPreset: (key: string) => void;
+  isClinicalLoading: boolean;
+  clinicalApiError: string | null;
+  isModelUnavailable: boolean;
+
   // ECG state
   selectedEcgPresetKey: string;
   ecgLead: 'Lead I' | 'Lead II' | 'V1' | 'V5';
@@ -32,19 +44,75 @@ interface AppContextType {
   ecgSignal: EcgSignalData;
   loadEcgPreset: (key: string) => void;
   handleCustomEcgUpload: (fileData: { name: string; rawPoints: number[]; hr: number; diagnosis: string }) => void;
+  isEcgLoading: boolean;
+  ecgApiError: string | null;
+  runEcgInference: () => Promise<void>;
+
+  // Multimodal state
+  isFusionLoading: boolean;
+  fusionApiError: string | null;
+  fusionResult: FusionPredictionResponse | null;
+  runMultimodalFusion: () => Promise<void>;
+
+  // Backend model status
+  backendStatus: ModelStatusResponse | null;
+  checkBackendHealth: () => Promise<void>;
+
   // Knowledge graph state
   selectedNodeId: string;
   setSelectedNodeId: (id: string) => void;
   selectedNode: KnowledgeNode | null;
+
   // Reports active tab
   reportsTab: 'reports' | 'evaluation' | 'experiments';
   setReportsTab: (tab: 'reports' | 'evaluation' | 'experiments') => void;
+
   // Feedback banner
   notification: string | null;
   showNotification: (msg: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+
+function formatClinicalPayload(d: ClinicalData) {
+  const cpMap = {
+    typical_angina: 0,
+    atypical_angina: 1,
+    non_anginal: 2,
+    asymptomatic: 3,
+  };
+  const restEcgMap = {
+    normal: 0,
+    st_t_wave_abnormality: 1,
+    left_ventricular_hypertrophy: 2,
+  };
+  const slopeMap = {
+    downsloping: 0,
+    flat: 1,
+    upsloping: 2,
+  };
+  const thalMap = {
+    normal: 2,
+    fixed_defect: 1,
+    reversible_defect: 3,
+  };
+
+  return {
+    age: Number(d.age),
+    sex: d.sex === 'male' ? 1 : 0,
+    cp: cpMap[d.chestPainType] ?? 0,
+    trestbps: Number(d.restingBP),
+    chol: Number(d.cholesterol),
+    fbs: d.fastingBloodSugar ? 1 : 0,
+    restecg: restEcgMap[d.restingECG] ?? 0,
+    thalach: Number(d.maxHeartRate),
+    exang: d.exerciseAngina ? 1 : 0,
+    oldpeak: Number(d.stDepression),
+    slope: slopeMap[d.stSlope] ?? 1,
+    ca: Number(d.majorVessels),
+    thal: thalMap[d.thalassemia] ?? 2,
+  };
+}
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentPage, setCurrentPage] = useState<PageId>('overview');
@@ -54,6 +122,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [clinicalResult, setClinicalResult] = useState<ClinicalAnalysisResult | null>(() =>
     evaluateClinicalData(CLINICAL_PRESETS.cad_risk.data)
   );
+  const [isClinicalLoading, setIsClinicalLoading] = useState<boolean>(false);
+  const [clinicalApiError, setClinicalApiError] = useState<string | null>(null);
+  const [isModelUnavailable, setIsModelUnavailable] = useState<boolean>(false);
 
   // ECG state
   const [selectedEcgPresetKey, setSelectedEcgPresetKey] = useState<string>('anterior_stemi');
@@ -63,6 +134,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     notch: true,
     baselineWander: true,
   });
+  const [isEcgLoading, setIsEcgLoading] = useState<boolean>(false);
+  const [ecgApiError, setEcgApiError] = useState<string | null>(null);
+
+  // Multimodal fusion state
+  const [isFusionLoading, setIsFusionLoading] = useState<boolean>(false);
+  const [fusionApiError, setFusionApiError] = useState<string | null>(null);
+  const [fusionResult, setFusionResult] = useState<FusionPredictionResponse | null>(null);
+
+  // Backend status
+  const [backendStatus, setBackendStatus] = useState<ModelStatusResponse | null>(null);
 
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -70,7 +151,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotification(msg);
     setTimeout(() => {
       setNotification((curr) => (curr === msg ? null : curr));
-    }, 4000);
+    }, 5000);
   };
 
   // Build ECG Signal Data based on preset, lead, and filters
@@ -131,24 +212,78 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, [selectedEcgPresetKey, ecgLead, ecgFilters]);
 
+  // Check backend health on mount
+  const checkBackendHealth = useCallback(async () => {
+    const res = await apiClient.getHealth();
+    if (res.success && res.data) {
+      setBackendStatus(res.data);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkBackendHealth();
+  }, [checkBackendHealth]);
+
   const loadClinicalPreset = (key: string) => {
     if (CLINICAL_PRESETS[key]) {
       setClinicalData(CLINICAL_PRESETS[key].data);
       const res = evaluateClinicalData(CLINICAL_PRESETS[key].data);
       setClinicalResult(res);
+      setClinicalApiError(null);
       showNotification(`Loaded preset: ${CLINICAL_PRESETS[key].label}`);
     }
   };
 
-  const runClinicalAnalysis = () => {
-    const res = evaluateClinicalData(clinicalData);
-    setClinicalResult(res);
-    showNotification('Clinical indicators validated & risk attribution model updated.');
+  const runClinicalAnalysis = async () => {
+    setIsClinicalLoading(true);
+    setClinicalApiError(null);
+    setIsModelUnavailable(false);
+
+    const payload = formatClinicalPayload(clinicalData);
+    const res = await apiClient.predictClinical(payload);
+
+    setIsClinicalLoading(false);
+
+    if (res.success && res.data) {
+      const predProb = Number((res.data.probability * 100).toFixed(1));
+      const baseline = evaluateClinicalData(clinicalData);
+      setClinicalResult({
+        ...baseline,
+        riskProbability: predProb,
+        confidenceInterval: [
+          Math.max(0, Number((predProb - 6.5).toFixed(1))),
+          Math.min(100, Number((predProb + 6.5).toFixed(1))),
+        ],
+        riskCategory:
+          predProb >= 50
+            ? 'Elevated Probability'
+            : predProb >= 35
+            ? 'Intermediate Probability'
+            : 'Low Probability',
+        validatedTimestamp: new Date().toISOString(),
+      });
+      showNotification(
+        `Real Model Inference: ${predProb}% risk (${res.data.risk_label.replace('_', ' ')}) via ${res.data.model}`
+      );
+    } else {
+      setClinicalApiError(res.error || 'Clinical prediction request failed.');
+      setIsModelUnavailable(Boolean(res.isModelUnavailable));
+      if (res.isModelUnavailable) {
+        showNotification(
+          'Clinical model artifact missing (HTTP 503). Train or supply artifact in backend/models/.'
+        );
+      } else if (res.isNetworkError) {
+        showNotification('Network failure connecting to backend API. Verify VITE_API_BASE_URL.');
+      } else {
+        showNotification(`Clinical API error: ${res.error}`);
+      }
+    }
   };
 
   const loadEcgPreset = (key: string) => {
     if (ECG_PRESETS[key]) {
       setSelectedEcgPresetKey(key);
+      setEcgApiError(null);
       showNotification(`Loaded ECG: ${ECG_PRESETS[key].label}`);
     }
   };
@@ -182,7 +317,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       snrDb: 24.2,
       stSegmentDeviationMv: 0.18,
     });
+    setEcgApiError(null);
     showNotification(`Uploaded & calibrated ${fileData.name} (${fileData.rawPoints.length} samples)`);
+  };
+
+  const runEcgInference = async () => {
+    setIsEcgLoading(true);
+    setEcgApiError(null);
+
+    const res = await apiClient.predictEcg({ raw_points: ecgSignal.points });
+    setIsEcgLoading(false);
+
+    if (res.success && res.data) {
+      setEcgSignal((prev) => ({
+        ...prev,
+        diagnosisConfidence: res.data!.probability,
+        rhythmDiagnosis:
+          res.data!.pattern_label === 'elevated_abnormality'
+            ? 'Electrophysiologic Pattern Abnormality Detected'
+            : 'Nominal Conduction Pattern',
+      }));
+      showNotification(
+        `ECG Model Inference: ${(res.data.probability * 100).toFixed(1)}% pattern probability via ${res.data.model}`
+      );
+    } else {
+      setEcgApiError(res.error || 'ECG inference request failed.');
+      showNotification(`ECG API error: ${res.error}`);
+    }
+  };
+
+  const runMultimodalFusion = async () => {
+    setIsFusionLoading(true);
+    setFusionApiError(null);
+
+    const cProb = (clinicalResult ? clinicalResult.riskProbability : 50.0) / 100.0;
+    const eProb = ecgSignal.diagnosisConfidence;
+
+    const res = await apiClient.predictFusion(cProb, eProb);
+    setIsFusionLoading(false);
+
+    if (res.success && res.data) {
+      setFusionResult(res.data);
+      showNotification(
+        `Decision Fusion: ${(res.data.fusion_score * 100).toFixed(1)}% (rule: ${res.data.fusion_formula})`
+      );
+    } else {
+      setFusionApiError(res.error || 'Fusion calculation failed.');
+      showNotification(`Fusion API error: ${res.error}`);
+    }
   };
 
   // Knowledge graph state
@@ -202,6 +384,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clinicalResult,
         runClinicalAnalysis,
         loadClinicalPreset,
+        isClinicalLoading,
+        clinicalApiError,
+        isModelUnavailable,
         selectedEcgPresetKey,
         ecgLead,
         setEcgLead,
@@ -210,6 +395,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ecgSignal,
         loadEcgPreset,
         handleCustomEcgUpload,
+        isEcgLoading,
+        ecgApiError,
+        runEcgInference,
+        isFusionLoading,
+        fusionApiError,
+        fusionResult,
+        runMultimodalFusion,
+        backendStatus,
+        checkBackendHealth,
         selectedNodeId,
         setSelectedNodeId,
         selectedNode,

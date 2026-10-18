@@ -1,0 +1,51 @@
+{
+  "model_name": "Clinical Random Forest",
+  "training_timestamp": "2026-10-16T10:04:59Z",
+  "hyperparameters": {
+    "n_estimators": 350,
+    "criterion": "entropy",
+    "max_features": "sqrt",
+    "class_weight": "balanced",
+    "random_state": 42
+  },
+  "dataset": {
+    "source": "data/heart.csv",
+    "total_samples": 291,
+    "train_samples": 232,
+    "test_samples": 59
+  },
+  "test_metrics": {
+    "accuracy": 0.8136,
+    "precision": 0.8,
+    "recall": 0.875,
+    "f1_score": 0.8358,
+    "auroc": 0.8443,
+    "pr_auc": 0.8602,
+    "confusion_matrix": [
+      [
+        20,
+        7
+      ],
+      [
+        4,
+        28
+      ]
+    ]
+  },
+  "feature_importances": {
+    "age": 0.091,
+    "sex": 0.03854,
+    "cp": 0.13209,
+    "trestbps": 0.07308,
+    "chol": 0.08076,
+    "fbs": 0.01276,
+    "restecg": 0.0249,
+    "thalach": 0.13564,
+    "exang": 0.04303,
+    "oldpeak": 0.11332,
+    "slope": 0.04059,
+    "ca": 0.11197,
+    "thal": 0.10232
+  },
+  "training_seconds": 0.564
+}

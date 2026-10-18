@@ -20,7 +20,16 @@ import { StatusMessage } from '../components/common/StatusMessage';
 import { BENCHMARK_MODELS } from '../data/mockData';
 
 export const MultimodalResearchPage: React.FC = () => {
-  const { clinicalResult, clinicalData, ecgSignal, setCurrentPage } = useApp();
+  const {
+    clinicalResult,
+    clinicalData,
+    ecgSignal,
+    isFusionLoading,
+    fusionApiError,
+    fusionResult,
+    runMultimodalFusion,
+    setCurrentPage,
+  } = useApp();
 
   const [selectedAlignmentPair, setSelectedAlignmentPair] = useState<number>(0);
 
@@ -39,7 +48,7 @@ export const MultimodalResearchPage: React.FC = () => {
       ecgSegment: 'Anterior Precordial Lead V1–V3 Inversion',
       attentionWeight: 0.88,
       pathophysiology:
-        'Symptomatic exertional angina matches localized regional anterior microvascular perfusion deficits detected by 1D-ResNet convolution filters.',
+        'Symptomatic exertional angina matches localized regional anterior microvascular perfusion deficits detected on electrocardiogram.',
       evidenceLevel: 'Class IIa (Level B)',
     },
     {
@@ -64,18 +73,16 @@ export const MultimodalResearchPage: React.FC = () => {
   const clinicalProb = clinicalResult ? clinicalResult.riskProbability : 62.0;
   const ecgProb = Number((ecgSignal.diagnosisConfidence * 100).toFixed(1));
 
-  // Joint cross-attention prediction combines clinical baseline with waveform morphology
-  const fusedProb = Number(
-    (0.42 * clinicalProb + 0.58 * ecgProb + (clinicalProb > 60 && ecgProb > 70 ? 4.2 : -2.1)).toFixed(1)
-  );
+  // Paper's canonical decision fusion rule: 0.70 * clinical_prob + 0.30 * ecg_prob
+  const fusedProb = Number((0.70 * clinicalProb + 0.30 * ecgProb).toFixed(1));
 
   return (
     <div className="bg-white min-h-screen">
       {/* 1. PAGE HEADER */}
       <PageHeader
         title="Multimodal Cardiac Research"
-        supportingText="Investigate how clinical information and ECG signals may complement each other."
-        kicker="Cross-Modal Attention Architecture"
+        supportingText="Investigate how clinical indicators and ECG signals complement each other using the paper's 70/30 decision fusion rule."
+        kicker="Weighted Decision Fusion Architecture (70% Clinical + 30% ECG)"
         actions={
           <div className="flex items-center gap-2">
             <Button
@@ -95,9 +102,9 @@ export const MultimodalResearchPage: React.FC = () => {
         <div className="mb-10">
           <StatusMessage
             type="info"
-            title="Validation Status: Retrospectively Calibrated Cohort"
+            title="Validation Status: Exploratory Linear Decision Fusion Heuristic"
           >
-            Multimodal fusion models evaluated on paired retrospective MIMIC-IV & PTB-XL datasets (n=4,280). Prospective multicenter randomized trial validation is in progress and required prior to diagnostic deployment.
+            The final multimodal risk combines Clinical Random Forest probability (70% weight) and ECG Random Forest abnormality probability (30% weight). Crucial methodological limitation: The research lacked a paired clinical-ECG test cohort, so this decision rule is an exploratory heuristic and is not validated by paired ROC-AUC curves.
           </StatusMessage>
         </div>
 
@@ -228,28 +235,57 @@ export const MultimodalResearchPage: React.FC = () => {
                   Synthesized Decision Output
                 </div>
                 <h3 className="text-2xl font-bold text-white">
-                  Cross-Attention Multimodal Prediction
+                  Linear Multimodal Decision Fusion (70% / 30%)
                 </h3>
                 <p className="text-slate-300 text-sm mt-1">
-                  Reconciled probability incorporating clinical risk factors and electrophysiologic morphology.
+                  Formula: 0.70 × P(Clinical) + 0.30 × P(ECG) = 0.70 × {clinicalProb}% + 0.30 × {ecgProb}%
                 </p>
               </div>
 
-              <div className="flex items-center gap-6">
+              <div className="flex flex-wrap items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={runMultimodalFusion}
+                  disabled={isFusionLoading}
+                  className="bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700"
+                >
+                  {isFusionLoading ? (
+                    <>
+                      <Activity className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                      Computing via Backend...
+                    </>
+                  ) : (
+                    <>
+                      <Cpu className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
+                      Verify via Backend API
+                    </>
+                  )}
+                </Button>
                 <div>
                   <div className="text-xs text-slate-400">Fused Ischemic Risk</div>
                   <div className="text-4xl font-bold font-mono text-cyan-400">
-                    {fusedProb}%
+                    {fusionResult ? `${(fusionResult.fusion_score * 100).toFixed(1)}%` : `${fusedProb}%`}
                   </div>
                 </div>
                 <div className="hidden sm:block border-l border-slate-700 pl-6">
-                  <div className="text-xs text-slate-400">Synergy Concordance</div>
+                  <div className="text-xs text-slate-400">Classification Label</div>
                   <div className="text-xl font-bold font-mono text-emerald-400">
-                    High (0.91)
+                    {fusionResult
+                      ? fusionResult.result_label.replace('_', ' ').toUpperCase()
+                      : fusedProb >= 50.0
+                      ? 'ELEVATED'
+                      : 'NOT ELEVATED'}
                   </div>
                 </div>
               </div>
             </div>
+
+            {fusionApiError && (
+              <div className="mt-4 p-3 bg-rose-950/80 border border-rose-800 rounded-lg text-xs text-rose-200 flex justify-between items-center">
+                <span>Fusion API Error: {fusionApiError}</span>
+              </div>
+            )}
 
             <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
               <div className="bg-[#071324] p-4 rounded-xl border border-slate-800">
@@ -267,9 +303,9 @@ export const MultimodalResearchPage: React.FC = () => {
               </div>
 
               <div className="bg-[#071324] p-4 rounded-xl border border-slate-800">
-                <div className="font-semibold text-slate-200 mb-1">Actionable Clinical Target</div>
+                <div className="font-semibold text-slate-200 mb-1">Evidence-Grounded Recommendation</div>
                 <p className="text-slate-400 leading-relaxed">
-                  Cross-attention vector recommends immediate invasive coronary angiography per ACC/AHA Class I consensus guidelines.
+                  Cardiovascular risk profile indicates consideration for diagnostic angiography consultation per ACC/AHA clinical consensus guidelines.
                 </p>
               </div>
             </div>
@@ -379,7 +415,7 @@ export const MultimodalResearchPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {BENCHMARK_MODELS.map((m, idx) => {
-                    const isMultimodal = m.modality === 'Cross-Attention Fusion';
+                    const isMultimodal = m.modality === 'Multimodal Decision Fusion';
                     return (
                       <tr
                         key={idx}
@@ -393,19 +429,19 @@ export const MultimodalResearchPage: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-4 text-slate-600">{m.modality}</td>
                         <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                          {m.auroc.toFixed(3)}
+                          {m.auroc !== null ? m.auroc.toFixed(3) : 'N/A'}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-slate-700">
-                          {m.f1Score.toFixed(3)}
+                          {m.f1Score !== null ? m.f1Score.toFixed(3) : 'N/A'}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-slate-700">
-                          {(m.sensitivity * 100).toFixed(1)}%
+                          {m.sensitivity !== null ? `${(m.sensitivity * 100).toFixed(1)}%` : 'N/A'}
                         </td>
                         <td className="py-3.5 px-4 font-mono text-slate-700">
-                          {(m.specificity * 100).toFixed(1)}%
+                          {m.specificity !== null ? `${(m.specificity * 100).toFixed(1)}%` : 'N/A'}
                         </td>
                         <td className="py-3.5 px-4 text-slate-500 text-xs">
-                          {m.sourceDataset} (n={m.testSetSize})
+                          {m.sourceDataset} {m.testSetSize ? `(n=${m.testSetSize})` : ''}
                         </td>
                       </tr>
                     );

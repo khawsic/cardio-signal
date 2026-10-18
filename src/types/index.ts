@@ -85,8 +85,8 @@ export interface MultimodalFusionState {
   ecgRisk: number;
   fusedRisk: number;
   concordanceScore: number;
-  validationStatus: 'Retrospectively Calibrated (MIT-BIH / MIMIC-IV)' | 'Prospective Registry Pending';
-  crossAttentionWeights: Array<{
+  validationStatus: 'Paper-Reported Exploratory Heuristic' | 'Evaluation Incomplete (Missing Paired Cohort)';
+  concordanceAlignments: Array<{
     clinicalFeature: string;
     ecgSegment: string;
     weight: number;
@@ -117,13 +117,16 @@ export interface KnowledgeEdge {
 export interface ModelBenchmark {
   modelName: string;
   architecture: string;
-  modality: 'Tabular Clinical' | '12-Lead ECG' | 'Cross-Attention Fusion';
-  auroc: number;
-  f1Score: number;
-  sensitivity: number;
-  specificity: number;
-  testSetSize: number;
+  modality: 'Tabular Clinical' | '12-Lead ECG' | 'Multimodal Decision Fusion';
+  auroc: number | null;
+  accuracy?: number | null;
+  f1Score: number | null;
+  sensitivity: number | null;
+  specificity: number | null;
+  testSetSize: number | null;
   sourceDataset: string;
+  provenanceType: 'paper_reported' | 'measured_reproduced' | 'illustrative_heuristic' | 'evaluation_incomplete';
+  provenanceNotes: string;
 }
 
 export interface ExperimentRecord {
@@ -133,10 +136,11 @@ export interface ExperimentRecord {
   datasetSplit: string;
   modality: string;
   learningRate: string;
-  auroc: number;
-  f1: number;
-  validationLoss: number;
+  auroc: number | null;
+  f1: number | null;
+  validationLoss: number | null;
   reproducibleSeed: number;
-  status: 'Reproduced' | 'Validated';
+  status: 'Paper Target' | 'Empirically Measured' | 'Evaluation Incomplete';
+  provenanceCategory: 'paper_reported' | 'locally_measured' | 'unvalidated_heuristic';
   notes: string;
 }

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Activity,
   ArrowRight,
@@ -90,18 +90,18 @@ export const OverviewPage: React.FC = () => {
               {/* Research Cohort Proof strip */}
               <div className="pt-2 flex flex-wrap items-center gap-6 text-xs text-slate-500 border-t border-slate-100">
                 <div>
-                  <strong className="text-slate-900 font-mono text-sm">21,837</strong>
-                  <span className="ml-1.5 text-slate-500">PTB-XL ECGs</span>
+                  <strong className="text-slate-900 font-mono text-sm">350 Trees</strong>
+                  <span className="ml-1.5 text-slate-500">Clinical RF (Cleveland)</span>
                 </div>
-                <div className="hidden sm:inline text-slate-300">Â·</div>
+                <div className="hidden sm:inline text-slate-300">·</div>
                 <div>
-                  <strong className="text-slate-900 font-mono text-sm">4,280</strong>
-                  <span className="ml-1.5 text-slate-500">Paired MIMIC-IV Cases</span>
+                  <strong className="text-slate-900 font-mono text-sm">191 Features</strong>
+                  <span className="ml-1.5 text-slate-500">ECG RF (MIT-BIH)</span>
                 </div>
-                <div className="hidden sm:inline text-slate-300">Â·</div>
+                <div className="hidden sm:inline text-slate-300">·</div>
                 <div>
-                  <strong className="text-cyan-700 font-mono text-sm">0.894</strong>
-                  <span className="ml-1.5 text-slate-500">Multimodal AUROC</span>
+                  <strong className="text-cyan-700 font-mono text-sm">70% / 30%</strong>
+                  <span className="ml-1.5 text-slate-500">Decision Fusion Rule</span>
                 </div>
               </div>
 
@@ -384,27 +384,27 @@ export const OverviewPage: React.FC = () => {
                 Single-modality cardiac algorithms suffer from blind spots. Tabular clinical risk scores fail to detect acute electrical conduction failure, while standard ECG neural classifiers lack historical metabolic, lipid, and demographic context.
               </p>
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                CardioSignal 2.0 fuses these streams via cross-attention layers that attend to time-series events when corresponding physiological risk markers are elevated.
+                CardioSignal 2.0 unifies these streams via a calibrated decision fusion rule (70% clinical probability + 30% ECG abnormality probability).
               </p>
 
               <div className="space-y-3 pt-3">
                 <div className="p-4 bg-white rounded-lg border border-slate-200">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-semibold text-slate-700">Tabular Clinical Model Only</span>
-                    <span className="font-mono text-slate-600">0.784 AUROC</span>
+                    <span className="font-semibold text-slate-700">Clinical Random Forest (Paper Reference)</span>
+                    <span className="font-mono text-slate-600">0.867 AUROC (Acc: 77.1%)</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-slate-400 h-full rounded-full" style={{ width: '78.4%' }} />
+                    <div className="bg-slate-500 h-full rounded-full" style={{ width: '86.7%' }} />
                   </div>
                 </div>
 
                 <div className="p-4 bg-white rounded-lg border border-slate-200">
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-semibold text-slate-700">12-Lead ECG ResNet-1D Only</span>
-                    <span className="font-mono text-slate-600">0.836 AUROC</span>
+                    <span className="font-semibold text-slate-700">ECG Random Forest (Paper Reference)</span>
+                    <span className="font-mono text-slate-600">0.869 AUROC (Acc: 82.2%)</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-slate-500 h-full rounded-full" style={{ width: '83.6%' }} />
+                    <div className="bg-slate-600 h-full rounded-full" style={{ width: '86.9%' }} />
                   </div>
                 </div>
 
@@ -412,12 +412,12 @@ export const OverviewPage: React.FC = () => {
                   <div className="flex items-center justify-between text-xs mb-1">
                     <span className="font-semibold text-[#0A192F] flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
-                      Multimodal Cross-Attention Fusion
+                      Multimodal Decision Fusion (70% Clinical + 30% ECG)
                     </span>
-                    <span className="font-mono font-bold text-cyan-700">0.894 AUROC (+0.110 gain)</span>
+                    <span className="font-mono font-bold text-cyan-700">Exploratory Decision Rule</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-cyan-600 h-full rounded-full" style={{ width: '89.4%' }} />
+                    <div className="bg-cyan-600 h-full rounded-full" style={{ width: '70%' }} />
                   </div>
                 </div>
               </div>
@@ -438,7 +438,7 @@ export const OverviewPage: React.FC = () => {
               <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white p-3 shadow-md">
                 <img
                   src={multimodalNetworkImage}
-                  alt="Multimodal cardiac network cross-attention diagram"
+                  alt="Multimodal cardiac decision fusion diagram"
                   referrerPolicy="no-referrer"
                   className="w-full h-auto rounded-xl object-cover"
                 />

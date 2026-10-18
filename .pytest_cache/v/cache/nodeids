@@ -1,0 +1,13 @@
+[
+  "backend/tests/test_api.py::test_ecg_feature_endpoint",
+  "backend/tests/test_api.py::test_ecg_feature_extraction_canonical",
+  "backend/tests/test_api.py::test_fusion_computation_formula",
+  "backend/tests/test_api.py::test_fusion_endpoint",
+  "backend/tests/test_api.py::test_fusion_invalid_ranges",
+  "backend/tests/test_api.py::test_health_endpoint",
+  "backend/tests/test_api.py::test_model_info_endpoint",
+  "backend/tests/test_api.py::test_root_endpoint",
+  "backend/tests/test_api.py::test_validate_clinical_inputs_missing_fields",
+  "backend/tests/test_api.py::test_validate_clinical_inputs_out_of_bounds",
+  "backend/tests/test_api.py::test_validate_clinical_inputs_valid"
+]

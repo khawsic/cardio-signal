@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Activity,
   Menu,
@@ -67,10 +67,10 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
       <div className="bg-[#071324] text-slate-300 text-xs border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-between">
           <div className="flex items-center gap-3 tracking-wide">
-            <span className="font-medium text-slate-200">Protocol v2.4-EHR</span>
-            <span className="text-slate-600 hidden sm:inline">Â·</span>
+            <span className="font-medium text-slate-200">Protocol v2.0-EHR</span>
+            <span className="text-slate-600 hidden sm:inline">·</span>
             <span className="text-slate-400 hidden sm:inline">
-              Validated On MIT-BIH & MIMIC-IV
+              Cleveland Clinical & MIT-BIH Architecture
             </span>
           </div>
 
@@ -136,8 +136,8 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
           {/* Research workspace action & active session metadata */}
           <div className="flex items-center gap-3">
             <div className="hidden lg:flex items-center gap-3 text-xs text-slate-500 border-r border-slate-200 pr-4">
-              <span>Cohort: MIT-BIH & PTB-XL</span>
-              <span>Â·</span>
+              <span>Cohort: Cleveland & MIT-BIH</span>
+              <span>·</span>
               <span>Patient: #{ecgSignal.patientId}</span>
               <span>Â·</span>
               <span className="font-mono text-slate-700 font-medium">
@@ -350,10 +350,9 @@ export const Shell: React.FC<ShellProps> = ({ children }) => {
                 Benchmark Cohorts
               </p>
               <ul className="space-y-2 text-slate-600">
-                <li>PhysioNet PTB-XL Diagnostic Database (n=21,837)</li>
-                <li>MIT-BIH Arrhythmia Reference Corpus</li>
-                <li>MIMIC-IV-ECG Paired Critical Care Cohort</li>
-                <li>Cleveland / Framingham Heart Study Harmonized</li>
+                <li>Cleveland Heart Disease Cohort (Structured Indicators)</li>
+                <li>MIT-BIH Arrhythmia Database (191-Feature Extraction)</li>
+                <li>Exploratory Decision Fusion Protocol (70% Clinical / 30% ECG)</li>
               </ul>
             </div>
 
