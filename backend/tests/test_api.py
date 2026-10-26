@@ -177,7 +177,7 @@ def test_predict_ecg_real_model(client):
 
 def test_health_503_when_model_missing(monkeypatch, client):
     import services.inference as inf
-    # Temporarily monkeypatch CLINICAL_MODEL_PATHS to non-existent files
+    inf._loaded_models["clinical"] = None
     monkeypatch.setattr(inf, "CLINICAL_MODEL_PATHS", ["/non/existent/path/model.joblib"])
     res = client.get("/health")
     assert res.status_code == 503
@@ -185,3 +185,63 @@ def test_health_503_when_model_missing(monkeypatch, client):
     assert data["status"] == "unhealthy"
     assert data["models_ready"] is False
     assert "error" in data
+    assert data["details"]["clinical_model"]["status"] == "MISSING"
+
+def test_health_503_when_model_fails_to_load(monkeypatch, client):
+    import services.inference as inf
+    import joblib
+    inf._loaded_models["clinical"] = None
+    inf._loaded_models["ecg"] = None
+
+    def mock_load(path):
+        raise ValueError("node array from the pickle has an incompatible dtype")
+
+    monkeypatch.setattr(joblib, "load", mock_load)
+    res = client.get("/health")
+    assert res.status_code == 503
+    data = res.get_json()
+    assert data["status"] == "unhealthy"
+    assert data["models_ready"] is False
+    assert data["details"]["clinical_model"]["status"] == "LOAD_FAILED"
+    assert "incompatible dtype" in data["details"]["clinical_model"]["load_error"]
+    assert "Scikit-Learn Version Mismatch" in data["details"]["clinical_model"]["load_error"]
+
+def test_predict_clinical_503_informative_error_when_load_fails(monkeypatch, client):
+    import services.inference as inf
+    import joblib
+    inf._loaded_models["clinical"] = None
+
+    def mock_load(path):
+        raise ValueError("node array from the pickle has an incompatible dtype")
+
+    monkeypatch.setattr(joblib, "load", mock_load)
+    payload = {
+        "age": 63, "sex": 1, "cp": 3, "trestbps": 145, "chol": 233, "fbs": 1,
+        "restecg": 0, "thalach": 150, "exang": 0, "oldpeak": 2.3, "slope": 0,
+        "ca": 0, "thal": 1
+    }
+    res = client.post("/predict/clinical", json=payload)
+    assert res.status_code == 503
+    data = res.get_json()
+    assert data["success"] is False
+    # Verifies error does NOT claim file is missing, but states it exists and cannot be loaded
+    assert "exists at" in data["error"]
+    assert "cannot be loaded" in data["error"]
+    assert "incompatible dtype" in data["error"]
+
+def test_model_feature_count_validation(monkeypatch, client):
+    import services.inference as inf
+    import joblib
+    inf._loaded_models["clinical"] = None
+
+    class MockModel:
+        n_features_in_ = 99  # Wrong feature count, expected 13
+        def predict_proba(self, X):
+            return [[0.2, 0.8]]
+
+    monkeypatch.setattr(joblib, "load", lambda path: MockModel())
+    res = client.get("/health")
+    assert res.status_code == 503
+    data = res.get_json()
+    assert data["models_ready"] is False
+    assert "Feature count validation failed" in data["details"]["clinical_model"]["load_error"]

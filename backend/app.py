@@ -50,17 +50,22 @@ def create_app():
 
     @app.route("/health", methods=["GET"])
     def health():
-        status = get_model_status()
-        models_ready = (
-            status["clinical_model"]["artifact_present"] and
-            status["ecg_model"]["artifact_present"]
-        )
+        status = get_model_status(attempt_load=True)
+        clinical_ok = status["clinical_model"]["loaded"]
+        ecg_ok = status["ecg_model"]["loaded"]
+        models_ready = clinical_ok and ecg_ok
+
         if not models_ready:
+            errors = []
+            if not clinical_ok:
+                errors.append(f"Clinical model: {status['clinical_model'].get('load_error') or 'Not loaded'}")
+            if not ecg_ok:
+                errors.append(f"ECG model: {status['ecg_model'].get('load_error') or 'Not loaded'}")
             return jsonify({
                 "status": "unhealthy",
                 "service": "CardioSignal 2.0 Backend",
                 "models_ready": False,
-                "error": "One or more required model artifacts are missing or unreadable on disk.",
+                "error": "One or more required model artifacts failed to load or validate: " + "; ".join(errors),
                 "details": status
             }), 503
 

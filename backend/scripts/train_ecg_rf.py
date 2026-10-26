@@ -31,10 +31,21 @@ def train_ecg_model(data_path: str, output_model_path: str, output_metrics_path:
 
     data_file = Path(data_path)
     if not data_file.is_file():
-        raise FileNotFoundError(f"Feature dataset not found at {data_path}")
+        candidates = [
+            Path(__file__).resolve().parent.parent / data_path,
+            Path(__file__).resolve().parent.parent / "data" / "ecg_features.csv",
+            Path("data/ecg_features.csv"),
+            Path("backend/data/ecg_features.csv")
+        ]
+        for c in candidates:
+            if c.is_file():
+                data_file = c
+                break
+        if not data_file.is_file():
+            raise FileNotFoundError(f"Feature dataset not found at {data_path} (checked {candidates})")
 
     df = pd.read_csv(data_file)
-    print(f"Loaded ECG dataset from {data_path}: {df.shape[0]} rows, {df.shape[1]} columns.")
+    print(f"Loaded ECG dataset from {data_file}: {df.shape[0]} rows, {df.shape[1]} columns.")
 
     # Safe target column validation - check explicit target column names
     possible_target_cols = ["target", "label", "is_abnormal", "abnormal", "y"]

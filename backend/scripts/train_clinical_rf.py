@@ -34,10 +34,21 @@ def train_model(data_path: str, output_model_path: str, output_metrics_path: str
 
     data_file = Path(data_path)
     if not data_file.is_file():
-        raise FileNotFoundError(f"Dataset not found at {data_path}")
+        candidates = [
+            Path(__file__).resolve().parent.parent / data_path,
+            Path(__file__).resolve().parent.parent / "data" / "heart.csv",
+            Path("data/heart.csv"),
+            Path("backend/data/heart.csv")
+        ]
+        for c in candidates:
+            if c.is_file():
+                data_file = c
+                break
+        if not data_file.is_file():
+            raise FileNotFoundError(f"Dataset not found at {data_path} (checked {candidates})")
 
     df = pd.read_csv(data_file)
-    print(f"Loaded raw dataset from {data_path}: {df.shape[0]} rows, {df.shape[1]} columns.")
+    print(f"Loaded raw dataset from {data_file}: {df.shape[0]} rows, {df.shape[1]} columns.")
 
     # 1. Strict Target Column Validation (prevent unsafe target inference)
     if TARGET_COL not in df.columns:
