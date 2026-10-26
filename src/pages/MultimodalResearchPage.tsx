@@ -287,6 +287,30 @@ export const MultimodalResearchPage: React.FC = () => {
               </div>
             )}
 
+            {fusionResult?.critical_limitation ? (
+              <div className="mt-4 p-3.5 bg-cyan-950/70 border border-cyan-800/80 rounded-lg text-xs text-cyan-200">
+                <div className="flex items-center gap-2 font-bold mb-1">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-900 border border-cyan-700">
+                    [Illustrative Heuristic]
+                  </span>
+                  <span>Decision Fusion Provenance & Validation Note</span>
+                </div>
+                <p className="leading-relaxed text-cyan-300/90">{fusionResult.critical_limitation}</p>
+              </div>
+            ) : (
+              <div className="mt-4 p-3.5 bg-slate-900/60 border border-slate-800 rounded-lg text-xs text-slate-300">
+                <div className="flex items-center gap-2 font-bold mb-1">
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700">
+                    [Illustrative Heuristic]
+                  </span>
+                  <span>Exploratory Multimodal Decision Rule</span>
+                </div>
+                <p className="leading-relaxed text-slate-400">
+                  Calculated via 0.70 × P(Clinical) + 0.30 × P(ECG). The published research literature lacked a paired clinical-ECG test cohort; this fusion calculation is an exploratory decision rule without empirical ROC-AUC curves.
+                </p>
+              </div>
+            )}
+
             <div className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
               <div className="bg-[#071324] p-4 rounded-xl border border-slate-800">
                 <div className="font-semibold text-slate-200 mb-1">Feature Reinforcement</div>

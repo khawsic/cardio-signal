@@ -23,6 +23,8 @@ import { ECG_PRESETS } from '../data/mockData';
 
 import ecgVectorImage from '../assets/images/ecg_lead_vector_field_1791732281961.jpg';
 
+import { apiClient, EcgSqiResponse } from '../services/apiClient';
+
 export const EcgLaboratoryPage: React.FC = () => {
   const {
     ecgSignal,
@@ -43,7 +45,39 @@ export const EcgLaboratoryPage: React.FC = () => {
   const [inspectCrosshair, setInspectCrosshair] = useState<{ x: number; y: number; timeMs: number; mv: number } | null>(null);
   const [showSaliency, setShowSaliency] = useState(true);
   const [zoomLevel, setZoomLevel] = useState<number>(1); // 1x or 2x
+  const [sqiData, setSqiData] = useState<EcgSqiResponse['sqi'] | null>(null);
+  const [isSqiLoading, setIsSqiLoading] = useState<boolean>(false);
+  const [noiseLevel, setNoiseLevel] = useState<number>(0); // 0 to 50%
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Compute Signal Quality Index (SQI) when points change or noise is injected
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSqi = async () => {
+      if (!ecgSignal.points || ecgSignal.points.length < 10) return;
+      setIsSqiLoading(true);
+
+      // If noise injection is active, generate noisy signal
+      let evalPoints = ecgSignal.points;
+      if (noiseLevel > 0) {
+        const noiseScale = (noiseLevel / 100) * 0.8;
+        evalPoints = ecgSignal.points.map((pt, i) => {
+          const gaussian = (Math.random() - 0.5) * noiseScale;
+          const baselineDrift = Math.sin((i / 250) * Math.PI * 0.4) * (noiseScale * 0.5);
+          return Number((pt + gaussian + baselineDrift).toFixed(3));
+        });
+      }
+
+      const res = await apiClient.extractEcgSqi(evalPoints);
+      if (isMounted && res.success && res.data?.sqi) {
+        setSqiData(res.data.sqi);
+      }
+      if (isMounted) setIsSqiLoading(false);
+    };
+
+    fetchSqi();
+    return () => { isMounted = false; };
+  }, [ecgSignal.points, noiseLevel]);
 
   // Render high-precision ECG waveform on HTML5 canvas with calibration grid
   useEffect(() => {
@@ -505,6 +539,109 @@ export const EcgLaboratoryPage: React.FC = () => {
                 />
               </label>
             </div>
+          </div>
+        </div>
+
+        {/* 5B. ORIGINAL SCIENTIFIC CONTRIBUTION: SIGNAL QUALITY INDEX (SQI) & NOISE STRESS TEST */}
+        <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 mb-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-50 text-cyan-800 border border-cyan-200 font-semibold uppercase">
+                  Novel Research Contribution
+                </span>
+                <span className="text-xs text-slate-500">Physiological Reliability Filter</span>
+              </div>
+              <h3 className="text-base font-bold text-[#0A192F] mt-1">
+                ECG Signal Quality Index (SQI) & Noise Robustness Sandbox
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {sqiData?.acceptable ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  Quality Gate: PASS ({((sqiData?.overall_score || 0) * 100).toFixed(0)}%)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+                  <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                  Quality Gate: REJECT ({((sqiData?.overall_score || 0) * 100).toFixed(0)}%)
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 my-6">
+            <div className="p-3.5 bg-slate-50 rounded-lg">
+              <span className="text-slate-500 text-[11px] block">Kurtosis SQI (kSQI)</span>
+              <div className="text-lg font-bold font-mono text-slate-900 mt-0.5">
+                {sqiData?.ksqi_kurtosis !== undefined ? sqiData.ksqi_kurtosis.toFixed(2) : '—'}
+              </div>
+              <span className="text-[10px] text-slate-400">Target: &gt; 3.0 (QRS Peak Sharpness)</span>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-lg">
+              <span className="text-slate-500 text-[11px] block">Baseline Wander (basSQI)</span>
+              <div className="text-lg font-bold font-mono text-slate-900 mt-0.5">
+                {sqiData?.baseline_wander_ratio !== undefined ? `${(sqiData.baseline_wander_ratio * 100).toFixed(1)}%` : '—'}
+              </div>
+              <span className="text-[10px] text-slate-400">Power &lt; 1 Hz (Respiration drift)</span>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-lg">
+              <span className="text-slate-500 text-[11px] block">High-Frequency Noise (hfSQI)</span>
+              <div className="text-lg font-bold font-mono text-slate-900 mt-0.5">
+                {sqiData?.high_frequency_noise_ratio !== undefined ? `${(sqiData.high_frequency_noise_ratio * 100).toFixed(1)}%` : '—'}
+              </div>
+              <span className="text-[10px] text-slate-400">Power &gt; 40 Hz (EMG Tremor)</span>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 rounded-lg">
+              <span className="text-slate-500 text-[11px] block">Estimated SNR</span>
+              <div className="text-lg font-bold font-mono text-cyan-800 mt-0.5">
+                {sqiData?.snr_db !== undefined ? `${sqiData.snr_db} dB` : '—'}
+              </div>
+              <span className="text-[10px] text-slate-400">Clipping: {sqiData?.clipping_ratio !== undefined ? `${(sqiData.clipping_ratio * 100).toFixed(1)}%` : '0%'}</span>
+            </div>
+          </div>
+
+          {/* Noise Injection Stress Slider */}
+          <div className="p-4 bg-slate-50/70 border border-slate-200/80 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 text-xs">
+              <span className="font-semibold text-slate-800">
+                Electrode Perturbation & Muscle Artifact Stress Test:
+              </span>
+              <span className="font-mono text-cyan-800 font-bold">
+                {noiseLevel === 0 ? 'Pure Physiological Signal (0% injected noise)' : `+${noiseLevel}% Injected EMG Tremor & Wander`}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="50"
+              step="5"
+              value={noiseLevel}
+              onChange={(e) => setNoiseLevel(parseInt(e.target.value, 10))}
+              className="w-full accent-cyan-600 cursor-pointer"
+            />
+            <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+              <span>0% Baseline</span>
+              <span>15% Mild Tremor</span>
+              <span>30% Severe Motion</span>
+              <span>50% Corrupted Lead</span>
+            </div>
+
+            {sqiData?.recommendations && sqiData.recommendations.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-600 space-y-1">
+                {sqiData.recommendations.map((rec, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <span className="text-cyan-700">›</span>
+                    <span>{rec}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

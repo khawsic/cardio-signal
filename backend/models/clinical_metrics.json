@@ -1,6 +1,6 @@
 {
   "model_name": "Clinical Random Forest",
-  "training_timestamp": "2026-10-16T10:04:59Z",
+  "training_timestamp": "2026-10-19T16:10:32Z",
   "hyperparameters": {
     "n_estimators": 350,
     "criterion": "entropy",
@@ -47,5 +47,5 @@
     "ca": 0.11197,
     "thal": 0.10232
   },
-  "training_seconds": 0.564
+  "training_seconds": 0.814
 }

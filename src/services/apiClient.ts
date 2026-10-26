@@ -144,6 +144,72 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 }
 
+export interface EcgSqiResponse {
+  success: boolean;
+  sqi: {
+    acceptable: boolean;
+    overall_score: number;
+    ksqi_kurtosis: number;
+    ssqi_skewness: number;
+    baseline_wander_ratio: number;
+    high_frequency_noise_ratio: number;
+    clipping_ratio: number;
+    snr_db: number;
+    recommendations: string[];
+  };
+}
+
+export interface EvalComparisonResponse {
+  success: boolean;
+  clinical_comparison: {
+    paper_reported: {
+      accuracy: number;
+      auroc: number;
+      test_size: number;
+      model_spec: string;
+    };
+    reproduced_test: {
+      accuracy: number;
+      auroc: number;
+      f1_score: number;
+      precision: number;
+      recall: number;
+      test_size: number | null;
+      confusion_matrix: number[][];
+    };
+    provenance: string;
+  };
+  ecg_comparison: {
+    paper_reported: {
+      accuracy: number;
+      auroc: number;
+      model_spec: string;
+    };
+    reproduced_test: {
+      accuracy: number;
+      auroc: number;
+      f1_score: number;
+      precision: number;
+      recall: number;
+      test_size: number;
+      confusion_matrix: number[][];
+      split_strategy: string;
+    };
+    investigation_findings: {
+      auroc: number;
+      uncalibrated_threshold: number;
+      explanation: string;
+    };
+    provenance: string;
+  };
+  fusion_provenance: {
+    formula: string;
+    status: string;
+    validation_status: string;
+    provenance: string;
+  };
+}
+
 export const apiClient = {
   baseUrl: BASE_URL,
 
@@ -153,6 +219,10 @@ export const apiClient = {
 
   async getModelInfo(): Promise<ApiResponse<any>> {
     return request<any>('/model-info');
+  },
+
+  async getEvalComparison(): Promise<ApiResponse<EvalComparisonResponse>> {
+    return request<EvalComparisonResponse>('/eval/comparison');
   },
 
   async predictClinical(payload: Record<string, any>): Promise<ApiResponse<ClinicalPredictionResponse>> {
@@ -171,6 +241,13 @@ export const apiClient = {
 
   async extractEcgFeatures(rawPoints: number[]): Promise<ApiResponse<EcgFeatureExtractionResponse>> {
     return request<EcgFeatureExtractionResponse>('/extract/ecg-features', {
+      method: 'POST',
+      body: JSON.stringify({ raw_points: rawPoints }),
+    });
+  },
+
+  async extractEcgSqi(rawPoints: number[]): Promise<ApiResponse<EcgSqiResponse>> {
+    return request<EcgSqiResponse>('/extract/ecg-sqi', {
       method: 'POST',
       body: JSON.stringify({ raw_points: rawPoints }),
     });
